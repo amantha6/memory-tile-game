@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Tile Flip Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #555;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #5e7bb7;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .game-container {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .game-stat {
+            background: #f0f6ff;
+            color: #5e7bb7;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 400;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        
+        .high-score {
+            background: #f5f0ff;
+            color: #9370DB;
+            position: relative;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            aspect-ratio: 1 / 1;
+            background-color: #f0f6ff;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            perspective: 1000px;
+            transition: transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+        }
+        
+        .card-front {
+            background: #bcd2ee;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+        
+        .card-front::after {
+            content: '?';
+            font-size: 1.8rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .card-back {
+            background: #dcd0ff;
+            transform: rotateY(180deg);
+            font-size: 2rem;
+        }
+        
+        .card.matched .card-back {
+            background: #d0f0c0;
+            animation: pulse 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: rotateY(180deg) scale(1); }
+            50% { transform: rotateY(180deg) scale(1.05); }
+            100% { transform: rotateY(180deg) scale(1); }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 5px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #bcd2ee;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        button:hover {
+            background: #a7c0e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .theme-selector {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #555;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            appearance: none;
+            padding-right: 25px;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='%23555' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 6px top 50%;
+            background-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        select:hover {
+            border-color: #bcd2ee;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #5e7bb7;
+        }
+        
+        .win-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(245,245,245,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #555;
+            transform: scale(0);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        
+        .win-message.visible {
+            transform: scale(1);
+        }
+        
+        .win-message h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #5e7bb7;
+        }
+        
+        .win-message p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        
+        .win-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            max-width: 80%;
+        }
+        
+        .win-message button {
+            margin-top: 15px;
+            font-size: 1rem;
+            padding: 10px 25px;
+            background: #5e7bb7;
+        }
+        
+        .win-message button:hover {
+            background: #4a6aa7;
+        }
+        
+        .high-scores-table {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 350px;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        
+        .high-scores-table th {
+            text-align: left;
+            padding: 8px;
+            background: #f0f6ff;
+            font-weight: 500;
+            color: #5e7bb7;
+            font-size: 0.9rem;
+        }
+        
+        .high-scores-table th:first-child {
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+        
+        .high-scores-table th:last-child {
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            text-align: right;
+        }
+        
+        .high-scores-table td {
+            padding: 8px;
+            background: #f9f9f9;
+            font-size: 0.9rem;
+        }
+        
+        .high-scores-table td:first-child {
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+        }
+        
+        .high-scores-table td:last-child {
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            text-align: right;
+        }
+        
+        .high-scores-table tr:nth-child(2) td {
+            background: #f5f0ff;
+            color: #9370DB;
+        }
+        
+        @media (max-width: 600px) {
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .game-info {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .game-stat {
+                flex: 1 0 calc(50% - 8px);
+                text-align: center;
+            }
+            
+            .win-message h2 {
+                font-size: 1.8rem;
+            }
+            
+            .win-content {
+                padding: 20px;
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Memory Tile Flip</h1>
+        <p class="subtitle">Find matching pairs & beat your high score</p>
+    </header>
+    
+    <div class="game-container">
+        <div class="game-info">
+            <div class="game-stat" id="moves">Moves: 0</div>
+            <div class="game-stat" id="matches">Matches: 0 / 8</div>
+            <div class="game-stat" id="timer">Time: 0s</div>
+            <div class="game-stat high-score" id="highScore">Best: ---</div>
+        </div>
+        
+        <div class="game-board" id="gameBoard"></div>
+        
+        <div class="controls">
+            <button id="reset">New Game</button>
+            <button id="showHighScores">High Scores</button>
+        </div>
+        
+        <div class="theme-selector">
+            <label for="theme">Theme:</label>
+            <select id="theme">
+                <option value="emoji">Emojis</option>
+                <option value="animals">Animals</option>
+                <option value="food">Food</option>
+                <option value="tech">Tech</option>
+                <option value="space">Space</option>
+                <option value="sports">Sports</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="win-message" id="winMessage">
+        <div class="win-content">
+            <h2>You Win!</h2>
+            <p id="finalStats"></p>
+            <p id="newHighScore" style="display: none; color: #9370DB; font-weight: 500;">NEW HIGH SCORE! 🏆</p>
+            
+            <div id="highScoresDisplay" style="display: none;">
+                <h3 style="margin: 15px 0 10px 0; color: #5e7bb7;">High Scores</h3>
+                <table class="high-scores-table" id="highScoresTable">
+                    <thead>
+                        <tr>
+                            <th>Theme</th>
+                            <th>Moves</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="highScoresTableBody">
+                        <!-- High scores will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <button id="playAgain">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Theme data
+        const themes = {
+            emoji: ['😀', '😎', '🥳', '😍', '🤯', '🤔', '😴', '🥺'],
+            animals: ['🐶', '🐱', '🐭', '🐰', '🦊', '🐻', '🐼', '🐨'],
+            food: ['🍎', '🍕', '🍩', '🍦', '🍔', '🍟', '🍫', '🍌'],
+            tech: ['💻', '📱', '🎮', '🎧', '⌚', '📷', '🔋', '💾'],
+            space: ['🚀', '🛸', '🌍', '🌙', '⭐', '🌠', '🪐', '👽'],
+            sports: ['⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏓', '🏆']
+        };
+
+        // Audio effects
+        const sounds = {
+            flip: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-light-switch-sound-1613.mp3'),
+            match: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-fairy-arcade-sparkle-866.mp3'),
+            win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
+            wrong: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-buzz-950.mp3'),
+            highScore: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3')
+        };
+
+        // Lower the volume
+        Object.values(sounds).forEach(sound => {
+            sound.volume = 0.2;
+        });
+
+        // Game state
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let gameStarted = false;
+        let gameTime = 0;
+        let timerInterval;
+        let currentTheme = 'emoji';
+        let highScores = JSON.parse(localStorage.getItem('memoryGameHighScores')) || {};
+
+        // DOM elements
+        const gameBoard = document.getElementById('gameBoard');
+        const movesDisplay = document.getElementById('moves');
+        const matchesDisplay = document.getElementById('matches');
+        const timerDisplay = document.getElementById('timer');
+        const highScoreDisplay = document.getElementById('highScore');
+        const resetButton = document.getElementById('reset');
+        const showHighScoresButton = document.getElementById('showHighScores');
+        const themeSelector = document.getElementById('theme');
+        const winMessage = document.getElementById('winMessage');
+        const finalStats = document.getElementById('finalStats');
+        const newHighScoreMessage = document.getElementById('newHighScore');
+        const playAgainButton = document.getElementById('playAgain');
+        const highScoresDisplay = document.getElementById('highScoresDisplay');
+        const highScoresTableBody = document.getElementById('highScoresTableBody');
+
+        // Initialize high scores if not exists
+        function initHighScores() {
+            if (!highScores[currentTheme]) {
+                highScores[currentTheme] = { moves: Infinity, time: Infinity };
+            }
+            updateHighScoreDisplay();
+        }
+
+        // Update high score display
+        function updateHighScoreDisplay() {
+            const score = highScores[currentTheme];
+            if (score && score.moves !== Infinity) {
+                highScoreDisplay.textContent = `Best: ${score.moves} moves (${score.time}s)`;
+            } else {
+                highScoreDisplay.textContent = 'Best: ---';
+            }
+        }
+
+        // Update high scores table
+        function updateHighScoresTable() {
+            highScoresTableBody.innerHTML = '';
+            
+            const scores = Object.entries(highScores)
+                .filter(([theme, score]) => score.moves !== Infinity)
+                .sort((a, b) => {
+                    // Sort by moves first, then by time
+                    if (a[1].moves !== b[1].moves) {
+                        return a[1].moves - b[1].moves;
+                    }
+                    return a[1].time - b[1].time;
+                });
+            
+            scores.forEach(([theme, score]) => {
+                const row = document.createElement('tr');
+                
+                const themeCell = document.createElement('td');
+                themeCell.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+                
+                const movesCell = document.createElement('td');
+                movesCell.textContent = `${score.moves} moves`;
+                
+                const timeCell = document.createElement('td');
+                timeCell.textContent = `${score.time}s`;
+                
+                row.appendChild(themeCell);
+                row.appendChild(movesCell);
+                row.appendChild(timeCell);
+                
+                highScoresTableBody.appendChild(row);
+            });
+            
+            // If no scores, show a message
+            if (scores.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.textContent = 'No high scores yet!';
+                cell.colSpan = 3;
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                highScoresTableBody.appendChild(row);
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            // Reset game state
+            cards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            moves = 0;
+            gameStarted = false;
+            gameTime = 0;
+            clearInterval(timerInterval);
+            
+            // Update displays
+            movesDisplay.textContent = `Moves: ${moves}`;
+            matchesDisplay.textContent = `Matches: ${matchedPairs} / 8`;
+            timerDisplay.textContent = `Time: ${gameTime}s`;
+            
+            // Initialize high scores
+            initHighScores();
+            
+            // Clear game board
+            gameBoard.innerHTML = '';
+            
+            // Hide win message
+            winMessage.classList.remove('visible');
+            newHighScoreMessage.style.display = 'none';
+            highScoresDisplay.style.display = 'none';
+            
+            // Create cards
+            const cardValues = [...themes[currentTheme], ...themes[currentTheme]];
+            
+            // Shuffle cards
+            for (let i = cardValues.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cardValues[i], cardValues[j]] = [cardValues[j], cardValues[i]];
+            }
+            
+            // Create card elements
+            cardValues.forEach((value, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front"></div>
+                        <div class="card-back">${value}</div>
+                    </div>
+                `;
+                
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+                cards.push(card);
+            });
+        }
+        
+        // Start timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                gameTime++;
+                timerDisplay.textContent = `Time: ${gameTime}s`;
+            }, 1000);
+        }
+        
+        // Flip card
+        function flipCard() {
+            const selectedCard = this;
+            
+            // Start timer on first card flip
+            if (!gameStarted) {
+                gameStarted = true;
+                startTimer();
+            }
+            
+            // Ignore if card is already flipped or matched
+            if (selectedCard.classList.contains('flipped') || 
+                selectedCard.classList.contains('matched') ||
+                flippedCards.length >= 2) {
+                return;
+            }
+            
+            // Play flip sound
+            sounds.flip.currentTime = 0;
+            sounds.flip.play();
+            
+            // Flip card
+            selectedCard.classList.add('flipped');
+            flippedCards.push(selectedCard);
+            
+            // Check for matches
+            if (flippedCards.length === 2) {
+                moves++;
+                movesDisplay.textContent = `Moves: ${moves}`;
+                
+                const card1 = flippedCards[0];
+                const card2 = flippedCards[1];
+                
+                const value1 = card1.querySelector('.card-back').textContent;
+                const value2 = card2.querySelector('.card-back').textContent;
+                
+                if (value1 === value2) {
+                    // Match found
+                    setTimeout(() => {
+                        card1.classList.add('matched');
+                        card2.classList.add('matched');
+                        
+                        // Play match sound
+                        sounds.match.currentTime = 0;
+                        sounds.match.play();
+                        
+                        matchedPairs++;
+                        matchesDisplay.textContent = `Matches: ${matchedPairs} / 8`;
+                        
+                        flippedCards = [];
+                        
+                        // Check for win
+                        if (matchedPairs === 8) {
+                            endGame();
+                        }
+                    }, 500);
+                } else {
+                    // No match
+                    setTimeout(() => {
+                        // Play wrong sound
+                        sounds.wrong.currentTime = 0;
+                        sounds.wrong.play();
+                        
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        flippedCards = [];
+                    }, 1000);
+                }
+            }
+        }
+        
+        // End game
+        function endGame() {
+            clearInterval(timerInterval);
+            
+            // Play win sound
+            sounds.win.currentTime = 0;
+            sounds.win.play();
+            
+            // Check if high score
+            let isNewHighScore = false;
+            if (!highScores[currentTheme] || moves < highScores[currentTheme].moves || 
+                (moves === highScores[currentTheme].moves && gameTime < highScores[currentTheme].time)) {
+                highScores[currentTheme] = { moves: moves, time: gameTime };
+                localStorage.setItem('memoryGameHighScores', JSON.stringify(highScores));
+                isNewHighScore = true;
+                
+                // Play high score sound
+                setTimeout(() => {
+                    sounds.highScore.currentTime = 0;
+                    sounds.highScore.play();
+                }, 1000);
+            }
+            
+            // Update high score display
+            updateHighScoreDisplay();
+            
+            // Show win message
+            finalStats.textContent = `You completed in ${moves} moves and ${gameTime} seconds!`;
+            
+            // Show high score message if applicable
+            if (isNewHighScore) {
+                newHighScoreMessage.style.display = 'block';
+            } else {
+                newHighScoreMessage.style.display = 'none';
+            }
+            
+            // Update high scores table
+            updateHighScoresTable();
+            
+            // Show win message
+            setTimeout(() => {
+                winMessage.classList.add('visible');
+            }, 500);
+        }
+        
+        // Show high scores
+        function showHighScores() {
+            // Update high scores table
+            updateHighScoresTable();
+            
+            // Show high scores display
+            highScoresDisplay.style.display = 'block';
+            
+            // Show win message (which contains high scores)
+            winMessage.classList.add('visible');
+        }
+        
+        // Event listeners
+        resetButton.addEventListener('click', initGame);
+        playAgainButton.addEventListener('click', initGame);
+        showHighScoresButton.addEventListener('click', showHighScores);
+        
+        themeSelector.addEventListener('change', function() {
+            currentTheme = this.value;
+            initGame();
+        });
+        
+        // Initialize game on load
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
